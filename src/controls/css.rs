@@ -304,13 +304,3 @@ unsafe fn handle_virtual_inputs(ctx: &InlineCtx) {
  * - If any of them include the button you are checking for, add 0x330 to your offset and check if
  * that is 0x01
  */
-
-pub fn install() {
-    skyline::install_hooks!(
-        check_virtual_inputs,
-        handle_virtual_inputs,
-        create_layout,
-        create_layout_button,
-        set_layout_position,
-    );
-}

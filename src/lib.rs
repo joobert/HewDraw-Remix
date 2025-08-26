@@ -59,6 +59,26 @@ pub fn is_on_ryujinx() -> bool {
 #[cfg(feature = "main_nro")]
 use once_cell::sync::OnceCell;
 
+#[skyline::from_offset(0x23ed810)]
+unsafe fn music_function1(arg: u64);
+
+#[skyline::from_offset(0x23ee0c0)]
+unsafe fn music_function2(arg: u64, arg2: u64);
+
+#[skyline::hook(offset = 0x14f99cc, inline)]
+unsafe fn training_reset_music2(ctx: &skyline::hooks::InlineCtx) {
+    if !smash::app::smashball::is_training_mode() {
+        music_function2(*ctx.registers[0].x.as_ref(), *ctx.registers[1].x.as_ref());
+    }
+}
+
+#[skyline::hook(offset = 0x1509fd4, inline)]
+unsafe fn training_reset_music1(ctx: &skyline::hooks::InlineCtx) {
+    if !smash::app::smashball::is_training_mode() {
+        music_function1(*ctx.registers[0].x.as_ref());
+    }
+}
+
 #[skyline::hook(offset = 0x235cad0, inline)]
 unsafe fn main_menu_quick(ctx: &skyline::hooks::InlineCtx) {
     let sp = (ctx as *const skyline::hooks::InlineCtx as *mut u8).add(0x100);
@@ -284,12 +304,12 @@ unsafe fn copy_fighter_info(
 pub extern "C" fn main() {
     #[cfg(feature = "main_nro")]
     {
-        lua::install();
-        online::install();
         matchup::install();
         skyline::patching::Patch::in_text(0x14f99cc).nop().unwrap();
         skyline::patching::Patch::in_text(0x1509fd4).nop().unwrap();
         skyline::install_hooks!(
+            training_reset_music1,
+            training_reset_music2,
             main_menu_quick,
             title_screen_play,
             //sss_to_css,
