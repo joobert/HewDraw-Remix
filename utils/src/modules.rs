@@ -269,16 +269,6 @@ fn set_item_vtable_hook(ctx: &mut InlineCtx) {
     };
 }
 
-pub(crate) fn init() {
-    skyline::install_hooks!(
-        set_fighter_vtable_hook,
-        set_weapon_vtable_hook
-    );
-    input::init();
-    param::init();
-    meter::init();
-}
-
 #[allow(dead_code)]
 pub(crate) unsafe fn init_items() {
     skyline::install_hooks!(

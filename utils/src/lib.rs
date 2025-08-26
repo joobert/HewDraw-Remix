@@ -24,7 +24,6 @@ pub use game_modes::open_modes_session;
 pub use game_modes::get_custom_mode;
 
 pub fn init() {
-    modules::init();
     singletons::init();
     game_modes::install();
     ui::install();

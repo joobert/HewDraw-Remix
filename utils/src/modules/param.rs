@@ -603,26 +603,6 @@ fn fighter_param_callback(hash: u64, mut data: &mut [u8]) -> Option<usize> {
 }
 
 #[arc_callback]
-fn common_param_callback(hash: u64, mut data: &mut [u8]) -> Option<usize> {
-    assert_eq!(hash, hash40("fighter/common/hdr/param/common.xml"));
-    let size = load_original_file(hash, &mut data)
-        .expect("Unable to load file for 'fighter/common/hdr/param/common.xml'");
-    let exact_data = &data[..size];
-    let listing = match prc::xml::read_xml(&mut std::io::Cursor::new(exact_data)) {
-        Ok(struc) => ParamListing::from(ParamKind::Struct(struc)),
-        Err(e) => {
-            panic!(
-                "Unable to parse 'fighter/common/hdr/param/common.prc'. Reason: {:?}",
-                e
-            )
-        }
-    };
-
-    *GLOBAL_COMMON_PARAM.write() = Some(listing);
-    Some(size)
-}
-
-#[arc_callback]
 fn agent_param_callback(hash: u64, mut data: &mut [u8]) -> Option<usize> {
     let size =
         load_original_file(hash, &mut data).expect("Unable to load file for agent param file!");
@@ -948,43 +928,5 @@ impl ParamModule {
                 .unwrap_or_else(|| panic!("Could not retrieve Agent ParamModule string: {}", key))
                 .clone(),
         }
-    }
-}
-
-pub(crate) fn init() {
-    fighter_param_callback::install(
-        "fighter/common/hdr/param/fighter_param.xml",
-        1 * 1024 * 1024,
-    );
-    common_param_callback::install("fighter/common/hdr/param/common.xml", 1 * 1024 * 1024);
-    for (file, _) in AGENT_PARAM_REVERSE.iter() {
-        agent_param_callback::install(arcropolis_api::Hash40(file.hash), 1 * 1024 * 1024);
-    }
-
-    // if TourneyConfig isn't valid, then don't bother installing callbacks
-    match TourneyConfig::load() {
-        Some(config) => match config.is_valid() {
-            true => {
-                // install the callback for selectively displaying stages
-                // max_size is technically unknown, but since we aren't adding new data to the prc, and the
-                // hdr file is presently 16kb, this should be sufficient.
-                ui_stage_db_prc_callback::install(STAGE_DB_PRC, /* 20kb */ 20480);
-                stage_select_layout_callback::install(
-                    STAGE_SELECT_LAYOUT,
-                    /* 10mb */ 10485760,
-                );
-                stage_select_layout_callback::install(
-                    STAGE_SELECT_PATCH_LAYOUT,
-                    /* 10mb */ 10485760,
-                );
-                stage_select_actor_callback::install(
-                    STAGE_SELECT_ACTOR_LUA,
-                    /* 1mb */
-                    1 * 1024 * 1024,
-                );
-            }
-            false => {}
-        },
-        None => {}
     }
 }

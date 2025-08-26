@@ -59,17 +59,11 @@ where
             Input Delay: {}
             {}
             DPAD ◄► Set Delay
-            DPAD ▼ Edit Modes
-
-            HDR Version:
-            {}
-            Assets {}\0",
+            DPAD ▼ Edit Modes\0",
             modes_newlines,
             CURRENT_ARENA_ID,
             latency,
-            modes_string,
-            crate::get_plugin_version(),
-            crate::get_romfs_version()
+            modes_string
         )
         .as_ptr(),
     );

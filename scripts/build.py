@@ -181,16 +181,6 @@ if (is_dev_build and not is_publish):
     non_dev_characters.remove(char)
 
   plugin_args = " --no-default-features "
-  if len(non_dev_characters) > 0:
-    # add each non dev character
-    plugin_args += '--features="main_nro",'
-    no_comma = True
-    for arg in iter(non_dev_characters):
-      if no_comma:
-        plugin_args += '"' + arg + '"'
-        no_comma = False
-      else:
-        plugin_args += ',"' + arg + '"'
 
   if not "dev-only" in sys.argv:
     # build the regular plugin with args
@@ -226,10 +216,7 @@ else:
 
     for char in char_list:
       if char not in characters:
-        print("fighter " + char + " does not exist! (are you using the ingame name for the character?) Valid names are:\n")
-        for char_ok in characters:
-          print(char_ok)
-        exit()
+        print("Skipping fighter changes for all")
       feature_list += ",\"" + char + "\""
 
   # simple build
