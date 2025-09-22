@@ -14,16 +14,11 @@ extern crate locks;
 extern crate once_cell;
 extern crate rand;
 extern crate skyline;
-#[cfg(feature = "skyline-web")]
-extern crate skyline_web;
 extern crate smash;
 extern crate smash2;
 extern crate smash_arc;
 extern crate ninput;
 extern crate toml;
-
-#[cfg(feature = "main_nro")]
-mod lua;
 
 #[cfg(feature = "main_nro")]
 mod online;
@@ -32,15 +27,7 @@ mod online;
 mod matchup;
 
 use skyline::libc::c_char;
-#[cfg(feature = "main_nro")]
-use skyline_web::*;
 use std::{fs, path::Path};
-
-#[cfg(feature = "main_nro")]
-#[export_name = "hdr_is_available"]
-pub fn is_available() -> bool {
-    true
-}
 
 pub fn is_on_ryujinx() -> bool {
     unsafe {
@@ -55,9 +42,6 @@ pub fn is_on_ryujinx() -> bool {
         }
     }
 }
-
-#[cfg(feature = "main_nro")]
-use once_cell::sync::OnceCell;
 
 #[skyline::from_offset(0x23ed810)]
 unsafe fn music_function1(arg: u64);
@@ -305,36 +289,5 @@ pub extern "C" fn main() {
     #[cfg(feature = "main_nro")]
     {
         matchup::install();
-        skyline::patching::Patch::in_text(0x14f99cc).nop().unwrap();
-        skyline::patching::Patch::in_text(0x1509fd4).nop().unwrap();
-        skyline::install_hooks!(
-            training_reset_music1,
-            training_reset_music2,
-            main_menu_quick,
-            title_screen_play,
-            //sss_to_css,
-            //css_to_sss,
-            //copy_fighter_info,
-            //load_ingame_call_sequence_scene,
-            //load_melee_scene,
-            //game_end,
-            //game_exit
-        );
-    }
-
-    #[cfg(not(feature = "runtime"))]
-    {
-        utils::init();
-    }
-
-    #[cfg(feature = "updater")]
-    {
-        std::thread::Builder::new()
-            .stack_size(0x40_0000)
-            .spawn(|| {
-                updater::check_for_updates();
-            })
-            .unwrap()
-            .join();
     }
 }
