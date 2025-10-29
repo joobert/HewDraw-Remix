@@ -43,6 +43,70 @@ pub fn is_on_ryujinx() -> bool {
     }
 }
 
+use once_cell::sync::OnceCell;
+
+/// gets the currently loaded assets version string for display
+pub fn get_romfs_version() -> &'static String {
+    static INSTANCE: OnceCell<String> = OnceCell::new();
+    INSTANCE.get_or_init(
+        || match std::fs::read_to_string("mods:/ui/romfs_version.txt") {
+            Ok(version_value) => version_value.trim().to_string(),
+            Err(_) => String::from("UNKNOWN"),
+        },
+    )
+}
+
+/// gets the main plugin version string for display
+pub fn get_plugin_version() -> &'static String {
+    static INSTANCE: OnceCell<String> = OnceCell::new();
+    INSTANCE.get_or_init(
+        || match std::fs::read_to_string("mods:/ui/ult_unleashed_version.txt") {
+            Ok(version_value) => version_value.trim().to_string(),
+            Err(_) => String::from("UNKNOWN"),
+        },
+    )
+}
+
+extern "C" {
+    fn change_version_string(arg: u64, string: *const c_char);
+}
+
+#[skyline::hook(replace = change_version_string)]
+fn change_version_string_hook(arg: u64, string: *const c_char) {
+    unsafe {
+        static mut DID_INIT: bool = false;
+        if !DID_INIT {
+            DID_INIT = true;
+            runtime_motion_patcher::run(true);
+        }
+    }
+    let original_str = unsafe { skyline::from_c_str(string) };
+    if original_str.contains("Ver.") {
+        let romfs_version = get_romfs_version();
+        let ult_unleashed_version = match std::fs::read_to_string("mods:/ui/ult_unleashed_version.txt") {
+            Ok(version_value) => version_value.trim().to_string(),
+            Err(_) => {
+                #[cfg(feature = "main_nro")]
+                if !is_on_ryujinx() {
+                    skyline_web::dialog_ok::DialogOk::ok(
+                        "Ultimate Unleashed version not found. Please ensure 'mods:/ui/ult_unleashed_version.txt' exists.",
+                    );
+                }
+
+                String::from("UNKNOWN")
+            }
+        };
+        let new_str = format!(
+            "{}\nUltimate Unleashed Ver. {}\nSmash Ver. {}\0",
+            original_str, ult_unleashed_version, romfs_version
+        );
+
+        call_original!(arg, skyline::c_str(&new_str))
+    } else {
+        call_original!(arg, string)
+    }
+}
+
 #[skyline::from_offset(0x23ed810)]
 unsafe fn music_function1(arg: u64);
 
@@ -286,8 +350,8 @@ unsafe fn copy_fighter_info(
 
 #[no_mangle]
 pub extern "C" fn main() {
-    #[cfg(feature = "main_nro")]
     {
+        skyline::install_hooks!(change_version_string_hook);
         matchup::install();
     }
 }
