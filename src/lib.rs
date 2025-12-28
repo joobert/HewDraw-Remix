@@ -332,22 +332,6 @@ unsafe fn load_melee_scene(arg: u64) {
 #[skyline::from_offset(0x1743870)]
 unsafe fn check_mode(mode: &mut u32, submode: &mut u32);
 
-#[skyline::hook(offset = 0x16b6bb0)]
-unsafe fn copy_fighter_info(
-    dst: &mut UnknownFighterInfoStruct,
-    src: &mut UnknownFighterInfoStruct,
-) {
-    let one =
-        *(skyline::hooks::getRegionAddress(skyline::hooks::Region::Text) as *mut u8).add(0x52c41b2);
-    if src.hash1 & 0xFF_FFFFFFFF == smash::hash40("ui_chara_random") && one == 0 && IS_LOADING {
-        dst.hash1 = 0xC1FFFF00_00000000;
-        dst.hash2 = 0xC1FFFF00_00000000;
-        src.hash1 = 0xC1FFFF00_00000000;
-        src.hash2 = 0xC1FFFF00_00000000;
-    }
-    call_original!(dst, src);
-}
-
 #[no_mangle]
 pub extern "C" fn main() {
     {
